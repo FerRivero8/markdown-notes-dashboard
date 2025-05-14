@@ -42,6 +42,23 @@ body.dark-mode {
     background-color: #00bcd4;
     color: #000;
   }
+
+  .toolbar-btn {
+    background-color: #2e2e2e;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+  
+  .toolbar-btn:hover {
+    background-color: #00bcd4;
+    color: #000;
+  }  
   
   .toolbar button.active {
     background-color: #00bcd4;

@@ -38,13 +38,13 @@ buttons.forEach(button => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folder, filename, content })
       });
-
+      
       const data = await res.json();
-      if (data.status === 'ok') {
+      if (res.ok && data.status === 'ok') {
         showToast('¡Archivo guardado con éxito!', 'success');
       } else {
-        showToast('Error al guardar el archivo.', 'error');
-      }
+        showToast(data.message || 'Error al guardar el archivo.', 'error');
+      }      
     }
   });
 });

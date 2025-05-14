@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     const isCollapsed = sidebar.classList.toggle('collapsed');
     sidebarToggle.innerHTML = isCollapsed ? '❯' : '❮';
+    document.body.classList.toggle('sidebar-hidden', isCollapsed);
   });
 
   document.querySelector('.sidebar-btn:nth-child(1)').addEventListener('click', async () => {

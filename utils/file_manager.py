@@ -11,7 +11,10 @@ def list_files(base_path, folder):
 
 def save_markdown(base_path, folder, filename, content):
     folder_path = os.path.join(base_path, folder)
-    os.makedirs(folder_path, exist_ok=True)
+    if not os.path.exists(folder_path):
+        raise FileNotFoundError("Folder does not exist")
+
     file_path = os.path.join(folder_path, filename)
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)
+

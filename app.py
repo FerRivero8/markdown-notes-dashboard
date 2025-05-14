@@ -35,8 +35,11 @@ def save_file():
     folder = data['folder']
     filename = data['filename']
     content = data['content']
-    save_markdown(DATA_DIR, folder, filename, content)
-    return jsonify({'status': 'ok'})
+    try:
+        save_markdown(DATA_DIR, folder, filename, content)
+        return jsonify({'status': 'ok'})
+    except FileNotFoundError:
+        return jsonify({'status': 'error', 'message': 'La carpeta no existe'}), 400
 
 @app.route('/api/delete_folder', methods=['DELETE'])
 def delete_folder():

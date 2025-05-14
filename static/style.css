@@ -51,6 +51,7 @@ body.dark-mode {
   display: flex;
   height: 100vh;
   width: 100vw;
+  transition: all 0.3s ease;
 }
 
 /* ======= SIDEBAR ======= */
@@ -62,29 +63,22 @@ body.dark-mode {
   flex-direction: column;
   border-right: 1px solid #333;
   overflow-y: auto;
-  transition: width 0.3s ease;
   font-size: 14px;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+  z-index: 2;
+  position: relative;
 }
 
 .sidebar.collapsed {
-  width: 0;
-  padding: 0;
-  overflow: hidden;
+  transform: translateX(-100%);
 }
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 1.4rem;
-  color: #00bcd4;
-  margin-bottom: 1.5rem;
-}
-
+/* ======= BOTÓN DE OCULTAR SIDEBAR ======= */
 #toggle-sidebar {
-  position: absolute;
+  position: fixed;
   top: 1rem;
-  left: 0.5rem;
+  left: 1rem;
   z-index: 10;
   background: #00bcd4;
   border: none;
@@ -94,13 +88,12 @@ body.dark-mode {
   width: 32px;
   height: 32px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, left 0.3s ease;
 }
 
 #toggle-sidebar:hover {
   background-color: #00acc1;
 }
-
 
 /* ======= BOTONES ======= */
 .sidebar-actions {
@@ -120,7 +113,7 @@ body.dark-mode {
   font-size: 14px;
   display: block;
   text-align: center;
-  text-decoration: none; /* Esto quita el subrayado */
+  text-decoration: none;
 }
 
 .sidebar-btn:hover {
@@ -171,7 +164,6 @@ body.dark-mode {
   background-color: #2a2a2a;
 }
 
-
 /* ======= CONTENIDO PRINCIPAL ======= */
 .main-content {
   flex-grow: 1;
@@ -180,6 +172,7 @@ body.dark-mode {
   padding: 2rem;
   overflow-y: auto;
   font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 /* ======= ESTILO MARKDOWN ======= */
@@ -218,7 +211,6 @@ body.dark-mode {
   font-size: 13px;
 }
 
-/* Código inline */
 .markdown-body code {
   background-color: #2c2c2c;
   padding: 2px 6px;
@@ -227,7 +219,7 @@ body.dark-mode {
   font-size: 13px;
 }
 
-/* ====== IMAGEN AVATAR EN EL DASHBOARD ESQUINA SUPERIOR DCHA ======*/
+/* ====== AVATAR ====== */
 .user-avatar {
   position: absolute;
   top: 1rem;
@@ -249,10 +241,11 @@ body.dark-mode {
   transform: scale(1.05);
 }
 
-/* === Ajuste de espaciado y alineación en la cabecera del sidebar === */
+/* ====== SIDEBAR HEADER ====== */
 .sidebar-header {
-  margin-top: 2.5rem; /* Separa del botón de ocultar */
+  margin-top: 2.5rem;
   margin-left: 1rem;
+  margin-bottom: 1rem; /* Añade esta línea */
 }
 
 .sidebar-title {
@@ -261,7 +254,7 @@ body.dark-mode {
   color: #00bcd4;
 }
 
-/* ====== DISEÑO BONITO PARA LOS ALERTS ====== */
+/* ====== TOASTS ====== */
 #toast-container {
   position: fixed;
   bottom: 20px;
@@ -276,7 +269,7 @@ body.dark-mode {
   padding: 12px 16px;
   margin-top: 10px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   font-size: 14px;
   opacity: 0;
   transform: translateY(20px);
@@ -297,7 +290,7 @@ body.dark-mode {
   }
 }
 
-/* ====== DISEÑO BONITO PARA LOS PROMPTS ====== */
+/* ====== MODALS ====== */
 .modal.hidden {
   display: none;
 }
@@ -320,7 +313,7 @@ body.dark-mode {
   padding: 2rem;
   border-radius: 10px;
   width: 300px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   color: #e0e0e0;
 }
 

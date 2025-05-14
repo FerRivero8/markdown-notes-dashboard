@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Editor Markdown Visual</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://unpkg.com/split.js/dist/split.min.js"></script>
+</head>
+<body class="dark-mode">
+  <div class="editor-container">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button data-type="h1">H1</button>
+      <button data-type="h2">H2</button>
+      <button data-type="bold"><strong>B</strong></button>
+      <button data-type="italic"><em>I</em></button>
+      <button data-type="quote">"Cita"</button>
+      <button data-type="ul">Lista •</button>
+      <button data-type="ol">Lista 1.</button>
+      <button data-type="code">Bloque Código</button>
+      <button data-type="inline-code">`Inline`</button>
+      <button data-type="link">Enlace</button>
+      <button data-type="image">Imagen</button>
+      <button id="save-to-dashboard">📁 Guardar en Dashboard</button>
+    </div>
+
+    <!-- Editor + Preview -->
+    <div id="split-area">
+      <textarea id="editor" placeholder="Escribe tu Markdown..."></textarea>
+      <div id="preview"></div>
+    </div>
+  </div>
+
+  <script src="/static/editor.js"></script>
+</body>
+</html>

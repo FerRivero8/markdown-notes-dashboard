@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Bienvenido a MySpace</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body.dark-mode {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1a1a1a, #101010);
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 16px;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .welcome-wrapper {
+      text-align: center;
+      background-color: #181818;
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 188, 212, 0.2);
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .profile-pic {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 3px solid #00bcd4;
+      object-fit: cover;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+    }
+
+    .welcome-wrapper p {
+      font-size: 0.95rem;
+      color: #ccc;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-wrapper h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      color: #ffffff;
+    }
+
+    .access-button {
+      background-color: #00bcd4;
+      border: none;
+      padding: 0.75rem 1.75rem;
+      font-weight: bold;
+      font-size: 1rem;
+      border-radius: 30px;
+      color: #000;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+    }
+
+    .access-button:hover {
+      background-color: #00acc1;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body class="dark-mode">
+  <div class="welcome-wrapper">
+    <img class="profile-pic" src="{{ url_for('static', filename='/img/profile.jpg') }}" alt="Foto de perfil">
+    <p>ferrivero@correo.es</p>
+    <h2>¡Hola, Fernando!</h2>
+    <a class="access-button" href="{{ url_for('dashboard') }}">Entrar a MySpace</a>
+  </div>
+</body>
+</html>

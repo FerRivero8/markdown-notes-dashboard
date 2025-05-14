@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>MisApuntes - Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="dark-mode">
+  <div class="dashboard-container">
+    
+    <!-- Botón Sidebar -->
+    <button id="toggle-sidebar" title="Ocultar barra lateral">❮</button>
+
+    <!-- Avatar -->
+    <div class="user-avatar">
+      <img src="{{ url_for('static', filename='img/profile.jpg') }}" alt="Avatar de usuario" />
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">MY SPACE</h2>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="sidebar-btn">+ Nueva Carpeta</button>
+        <button class="sidebar-btn">+ Subir Archivo .md</button>
+      </div>
+
+      <div class="folder-structure">
+        <p style="opacity: 0.5; margin-top: 1rem;">(Sin carpetas ni archivos)</p>
+      </div>
+    </aside>
+
+    <!-- Preview -->
+    <main class="main-content">
+      <div id="markdown-viewer" class="markdown-body">
+        <p style="opacity: 0.5;">Selecciona un archivo Markdown para visualizarlo.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

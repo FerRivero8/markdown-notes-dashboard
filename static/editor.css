@@ -1,0 +1,103 @@
+/* ====== MODO OSCURO GENERAL ====== */
+body.dark-mode {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* ====== CONTENEDOR GENERAL ====== */
+  .editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+  }
+  
+  /* ====== BARRA DE HERRAMIENTAS ====== */
+  .toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #1f1f1f;
+    border-bottom: 1px solid #333;
+    flex-wrap: wrap;
+  }
+  
+  .toolbar button {
+    background-color: #2e2e2e;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+  }
+  
+  .toolbar button:hover {
+    background-color: #00bcd4;
+    color: #000;
+  }
+  
+  .toolbar button.active {
+    background-color: #00bcd4;
+    color: #000;
+  }
+  
+  /* ====== ÁREA DE TRABAJO ====== */
+  #split-area {
+    display: flex;
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* ====== EDITOR ====== */
+  #editor {
+    width: 100%;
+    padding: 1rem;
+    background-color: #181818;
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    font-family: monospace;
+    resize: none;
+    outline: none;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* ====== PREVISUALIZACIÓN ====== */
+  #preview {
+    width: 100%;
+    padding: 1rem;
+    background-color: #1e1e1e;
+    overflow-y: auto;
+    border-left: 1px solid #333;
+    font-family: system-ui, sans-serif;
+    line-height: 1.6;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  
+  #preview h1 { font-size: 1.8rem; }
+  #preview h2 { font-size: 1.5rem; }
+  #preview pre {
+    background: #111;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    color: #f8f8f2;
+  }
+  
+  /* ====== DIVISOR DE SPLIT.JS ====== */
+  .gutter {
+    background-color: #333;
+    cursor: col-resize;
+    width: 6px;
+    height: 100%;
+  }
+  

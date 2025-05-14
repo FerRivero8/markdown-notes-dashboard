@@ -1,0 +1,6 @@
+# Evita subir la imagen personal
+/static/img/profile.jpg
+
+# No subir archivos de usuario ni notas personales
+/data/*
+!.gitkeep

@@ -118,6 +118,9 @@ body.dark-mode {
   cursor: pointer;
   transition: background-color 0.2s;
   font-size: 14px;
+  display: block;
+  text-align: center;
+  text-decoration: none; /* Esto quita el subrayado */
 }
 
 .sidebar-btn:hover {
@@ -256,4 +259,106 @@ body.dark-mode {
   margin: 0;
   font-size: 1.6rem;
   color: #00bcd4;
+}
+
+/* ====== DISEÑO BONITO PARA LOS ALERTS ====== */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.toast {
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+  border-left: 4px solid #00bcd4;
+  padding: 12px 16px;
+  margin-top: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideIn 0.3s ease forwards, fadeOut 0.3s ease 4s forwards;
+}
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* ====== DISEÑO BONITO PARA LOS PROMPTS ====== */
+.modal.hidden {
+  display: none;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: #1f1f1f;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  color: #e0e0e0;
+}
+
+.modal-content p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modal-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+#modal-ok {
+  background-color: #00bcd4;
+  color: black;
+}
+
+#modal-cancel {
+  background-color: #444;
+  color: white;
 }

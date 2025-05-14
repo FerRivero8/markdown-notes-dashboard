@@ -10,45 +10,42 @@ Split(['#editor', '#preview'], {
   cursor: 'col-resize'
 });
 
-// Marcar línea activa visualmente
-editor.addEventListener('input', highlightCurrentLine);
-editor.addEventListener('click', highlightCurrentLine);
-editor.addEventListener('keydown', highlightCurrentLine);
+// Vista previa en tiempo real
+editor.addEventListener('input', () => {
+  preview.innerHTML = marked.parse(editor.value);
+});
+editor.dispatchEvent(new Event('input'));
 
-function highlightCurrentLine() {
-  const value = editor.value;
-  const lines = value.split('\n');
-  const pos = editor.selectionStart;
-
-  let charCount = 0;
-  let currentLine = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (charCount + lines[i].length >= pos) {
-      currentLine = i;
-      break;
-    }
-    charCount += lines[i].length + 1;
-  }
-
-  const highlighted = lines.map((line, index) => {
-    return index === currentLine
-      ? `<div style="background-color: #2a2a2a; padding: 2px 0;">${line || '&nbsp;'}</div>`
-      : `<div>${line || '&nbsp;'}</div>`;
-  }).join('');
-
-  preview.innerHTML = marked.parse(value);
-
-  // Optional: show raw lines with highlighting for debug
-  // preview.innerHTML = highlighted;
-}
-
-// Formatear selección o línea actual
+// Formatear texto seleccionado
 buttons.forEach(button => {
-  button.addEventListener('click', () => {
+  button.addEventListener('click', async () => {
     const type = button.dataset.type;
-    applyMarkdown(type);
-    preview.innerHTML = marked.parse(editor.value);
+    if (type) {
+      applyMarkdown(type);
+      preview.innerHTML = marked.parse(editor.value);
+    } else if (button.id === 'save-to-dashboard') {
+      const folder = await askUser('¿En qué carpeta quieres guardar el archivo?');
+      const filename = await askUser('Nombre del archivo (ej: nota.md):');
+      if (!folder || !filename.endsWith('.md')) {
+        showToast('Carpeta requerida y archivo debe terminar en .md', 'error');
+        return;
+      }
+
+      const content = editor.value;
+
+      const res = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder, filename, content })
+      });
+
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast('¡Archivo guardado con éxito!', 'success');
+      } else {
+        showToast('Error al guardar el archivo.', 'error');
+      }
+    }
   });
 });
 
@@ -71,15 +68,11 @@ function applyMarkdown(type) {
       case 'code': insertText = `\n\`\`\`\n${selected}\n\`\`\`\n`; break;
       case 'inline-code': insertText = `\`${selected}\``; break;
       case 'link': {
-        const url = prompt('Introduce la URL:', 'https://');
-        if (!url) return;
-        insertText = `[${selected || 'enlace'}](${url})`;
+        insertText = `[${selected || 'enlace'}](https://)`;
         break;
       }
       case 'image': {
-        const url = prompt('Introduce la URL de la imagen:');
-        if (!url) return;
-        insertText = `![${selected || 'descripción'}](${url})`;
+        insertText = `![${selected || 'descripción'}](https://)`;
         break;
       }
     }
@@ -95,18 +88,8 @@ function applyMarkdown(type) {
       case 'ol': insertText = `1. `; break;
       case 'code': insertText = '\n```\n\n```\n'; break;
       case 'inline-code': insertText = '`'; break;
-      case 'link': {
-        const url = prompt('Introduce la URL:', 'https://');
-        if (!url) return;
-        insertText = `[enlace](${url})`;
-        break;
-      }
-      case 'image': {
-        const url = prompt('Introduce la URL de la imagen:');
-        if (!url) return;
-        insertText = `![descripción](${url})`;
-        break;
-      }
+      case 'link': insertText = `[enlace](https://)`; break;
+      case 'image': insertText = `![descripción](https://)`; break;
     }
     editor.setRangeText(insertText, start, start, 'end');
   }
@@ -114,28 +97,58 @@ function applyMarkdown(type) {
   editor.focus();
 }
 
+// Toasts
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.classList.add('toast');
 
-document.getElementById('save-to-dashboard').addEventListener('click', async () => {
-  const folder = prompt('¿En qué carpeta quieres guardar este archivo?');
-  const filename = prompt('Nombre del archivo (ej: nota.md):');
-
-  if (!folder || !filename.endsWith('.md')) {
-    alert('Carpeta requerida y el archivo debe terminar en .md');
-    return;
+  if (type === 'error') {
+    toast.style.borderLeftColor = '#f44336';
+  } else if (type === 'success') {
+    toast.style.borderLeftColor = '#4caf50';
   }
 
-  const content = editor.value; // el contenido del <textarea>
+  toast.textContent = message;
+  container.appendChild(toast);
 
-  const res = await fetch('/api/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ folder, filename, content })
+  setTimeout(() => {
+    toast.remove();
+  }, 4500);
+}
+
+// Modal input
+function askUser(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const msg = document.getElementById('modal-message');
+    const input = document.getElementById('modal-input');
+    const btnOk = document.getElementById('modal-ok');
+    const btnCancel = document.getElementById('modal-cancel');
+
+    msg.textContent = message;
+    input.value = '';
+    input.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    input.focus();
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      btnOk.removeEventListener('click', handleOk);
+      btnCancel.removeEventListener('click', handleCancel);
+    }
+
+    function handleOk() {
+      closeModal();
+      resolve(input.value.trim());
+    }
+
+    function handleCancel() {
+      closeModal();
+      resolve(null);
+    }
+
+    btnOk.addEventListener('click', handleOk);
+    btnCancel.addEventListener('click', handleCancel);
   });
-
-  const data = await res.json();
-  if (data.status === 'ok') {
-    alert('¡Archivo guardado con éxito en el dashboard!');
-  } else {
-    alert('Error al guardar el archivo.');
-  }
-});
+}

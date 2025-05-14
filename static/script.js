@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.querySelector('.sidebar-btn:nth-child(1)').addEventListener('click', async () => {
-    const folder = prompt('Nombre de la nueva carpeta:');
+    const folder = await askUser('Nombre de la nueva carpeta:');
     if (!folder) return;
 
     const res = await fetch('/api/save', {
@@ -19,22 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       body: JSON.stringify({ folder, filename: '.empty', content: '' })
     });
 
-    if (res.ok) loadStructure();
-  });
-
-  document.querySelector('.sidebar-btn:nth-child(2)').addEventListener('click', async () => {
-    const folder = prompt('¿En qué carpeta quieres subir el archivo?');
-    const filename = prompt('Nombre del archivo (con .md):');
-    const content = prompt('Pega el contenido Markdown aquí:');
-    if (!folder || !filename.endsWith('.md')) return;
-
-    const res = await fetch('/api/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folder, filename, content })
-    });
-
-    if (res.ok) loadStructure();
+    if (res.ok) {
+      loadStructure();
+      showToast(`Carpeta "${folder}" creada.`, 'success');
+    } else {
+      showToast('Error al crear la carpeta.', 'error');
+    }
   });
 
   async function loadStructure() {
@@ -67,28 +57,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       addBtn.title = 'Añadir archivo .md a esta carpeta';
       addBtn.onclick = async (e) => {
         e.stopPropagation();
-        const filename = prompt('Nombre del nuevo archivo .md:');
+        const filename = await askUser('Nombre del nuevo archivo .md:');
         if (!filename?.endsWith('.md')) return;
-        const content = prompt('Contenido inicial (opcional):') || '';
+        const content = await askUser('Contenido inicial (opcional):') || '';
         const res = await fetch('/api/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ folder, filename, content })
         });
-        if (res.ok) loadStructure();
+        if (res.ok) {
+          loadStructure();
+          showToast(`Archivo "${filename}" creado en "${folder}".`, 'success');
+        } else {
+          showToast('Error al crear el archivo.', 'error');
+        }
       };
 
       const menuBtn = document.createElement('span');
       menuBtn.textContent = '⋯';
       menuBtn.className = 'add-md-btn';
       menuBtn.title = 'Opciones de carpeta';
-      menuBtn.onclick = (e) => {
+      menuBtn.onclick = async (e) => {
         e.stopPropagation();
-        const confirmDelete = confirm(`¿Eliminar la carpeta "${folder}" y su contenido?`);
-        if (!confirmDelete) return;
+        const confirmed = await confirmAction(`¿Eliminar la carpeta "${folder}" y su contenido?`);
+        if (!confirmed) return;
 
         fetch(`/api/delete_folder?folder=${folder}`, { method: 'DELETE' })
-          .then(res => res.ok && loadStructure());
+          .then(res => {
+            if (res.ok) {
+              loadStructure();
+              showToast(`Carpeta "${folder}" eliminada.`, 'success');
+            } else {
+              showToast('Error al eliminar la carpeta.', 'error');
+            }
+          });
       };
 
       actions.appendChild(addBtn);
@@ -126,19 +128,27 @@ document.addEventListener('DOMContentLoaded', async () => {
           const fileRes = await fetch(`/data/${folder}/${file}`);
           const content = await fileRes.text();
           viewer.innerHTML = marked.parse(content);
+          showToast(`Visualizando "${file}".`);
         });
 
         const fileMenu = document.createElement('span');
         fileMenu.textContent = '⋯';
         fileMenu.className = 'add-md-btn';
         fileMenu.title = 'Eliminar archivo';
-        fileMenu.onclick = (e) => {
+        fileMenu.onclick = async (e) => {
           e.stopPropagation();
-          const confirmDelete = confirm(`¿Eliminar el archivo "${file}"?`);
-          if (!confirmDelete) return;
+          const confirmed = await confirmAction(`¿Eliminar el archivo "${file}"?`);
+          if (!confirmed) return;
 
           fetch(`/api/delete_file?folder=${folder}&file=${file}`, { method: 'DELETE' })
-            .then(res => res.ok && loadStructure());
+            .then(res => {
+              if (res.ok) {
+                loadStructure();
+                showToast(`Archivo "${file}" eliminado.`, 'success');
+              } else {
+                showToast('Error al eliminar el archivo.', 'error');
+              }
+            });
         };
 
         fileEl.appendChild(nameSpan);
@@ -153,3 +163,90 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   loadStructure();
 });
+
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.classList.add('toast');
+
+  if (type === 'error') {
+    toast.style.borderLeftColor = '#f44336';
+  } else if (type === 'success') {
+    toast.style.borderLeftColor = '#4caf50';
+  }
+
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 4500);
+}
+
+function askUser(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const msg = document.getElementById('modal-message');
+    const input = document.getElementById('modal-input');
+    const btnOk = document.getElementById('modal-ok');
+    const btnCancel = document.getElementById('modal-cancel');
+
+    msg.textContent = message;
+    input.value = '';
+    modal.classList.remove('hidden');
+    input.focus();
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      btnOk.removeEventListener('click', handleOk);
+      btnCancel.removeEventListener('click', handleCancel);
+    }
+
+    function handleOk() {
+      closeModal();
+      resolve(input.value.trim());
+    }
+
+    function handleCancel() {
+      closeModal();
+      resolve(null);
+    }
+
+    btnOk.addEventListener('click', handleOk);
+    btnCancel.addEventListener('click', handleCancel);
+  });
+}
+
+function confirmAction(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const msg = document.getElementById('modal-message');
+    const input = document.getElementById('modal-input');
+    const btnOk = document.getElementById('modal-ok');
+    const btnCancel = document.getElementById('modal-cancel');
+
+    msg.textContent = message;
+    input.classList.add('hidden');
+    modal.classList.remove('hidden');
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      input.classList.remove('hidden');
+      btnOk.removeEventListener('click', handleOk);
+      btnCancel.removeEventListener('click', handleCancel);
+    }
+
+    function handleOk() {
+      closeModal();
+      resolve(true);
+    }
+
+    function handleCancel() {
+      closeModal();
+      resolve(false);
+    }
+
+    btnOk.addEventListener('click', handleOk);
+    btnCancel.addEventListener('click', handleCancel);
+  });
+}

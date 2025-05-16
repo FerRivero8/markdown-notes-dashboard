@@ -13,6 +13,7 @@ Split(['#editor', '#preview'], {
 // Vista previa en tiempo real
 editor.addEventListener('input', () => {
   preview.innerHTML = marked.parse(editor.value);
+  preview.scrollTop = preview.scrollHeight;
 });
 editor.dispatchEvent(new Event('input'));
 

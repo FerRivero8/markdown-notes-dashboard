@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import os
+import shutil
 from utils.file_manager import list_folders, list_files, save_markdown
 from flask import send_from_directory
 
@@ -46,11 +47,9 @@ def delete_folder():
     folder = request.args.get('folder')
     folder_path = os.path.join(DATA_DIR, folder)
     if os.path.exists(folder_path):
-        import shutil
         shutil.rmtree(folder_path)
         return jsonify({'status': 'deleted'})
     return jsonify({'status': 'not found'}), 404
-
 
 @app.route('/api/delete_file', methods=['DELETE'])
 def delete_file():
@@ -62,6 +61,31 @@ def delete_file():
         return jsonify({'status': 'deleted'})
     return jsonify({'status': 'not found'}), 404
 
+@app.route('/api/move_file', methods=['POST'])
+def move_file():
+    data = request.get_json()
+    file = data.get('file')
+    source = data.get('source')
+    target = data.get('target')
+
+    if not all([file, source, target]):
+        return jsonify({'status': 'error', 'message': 'Datos incompletos'}), 400
+
+    source_path = os.path.join(DATA_DIR, source, file)
+    target_folder_path = os.path.join(DATA_DIR, target)
+    target_path = os.path.join(target_folder_path, file)
+
+    if not os.path.exists(source_path):
+        return jsonify({'status': 'error', 'message': 'Archivo origen no encontrado'}), 404
+
+    if not os.path.exists(target_folder_path):
+        os.makedirs(target_folder_path)
+
+    try:
+        shutil.move(source_path, target_path)
+        return jsonify({'status': 'moved'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/data/<path:filename>')
 def serve_markdown_file(filename):

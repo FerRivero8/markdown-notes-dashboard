@@ -94,6 +94,47 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
       };
 
+      // Drag target handlers for folders
+      folderHeader.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        folderHeader.style.backgroundColor = '#2e2e2e';
+      });
+
+      folderHeader.addEventListener('dragleave', () => {
+        folderHeader.style.backgroundColor = '';
+      });
+
+      folderHeader.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        folderHeader.style.backgroundColor = '';
+      
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const { filename, fromFolder } = data;
+        const toFolder = folder;
+      
+        if (fromFolder === toFolder) {
+          return showToast("El archivo ya está en esta carpeta.", 'info');
+        }
+      
+        // 🔁 Llamada al backend
+        const res = await fetch('/api/move_file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file: filename,
+            source: fromFolder,
+            target: toFolder
+          })
+        });
+      
+        if (res.ok) {
+          showToast(`"${filename}" movido a "${toFolder}".`, 'success');
+          await loadStructure(); // ✅ Refresca la estructura después del movimiento
+        } else {
+          showToast('Error al mover el archivo.', 'error');
+        }
+      });      
+
       actions.appendChild(addBtn);
       actions.appendChild(menuBtn);
       folderHeader.appendChild(folderName);
@@ -120,6 +161,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileEl.style.justifyContent = 'space-between';
         fileEl.style.alignItems = 'center';
         fileEl.style.paddingLeft = '20px';
+        fileEl.setAttribute('draggable', 'true');
+        fileEl.dataset.filename = file;
+        fileEl.dataset.folder = folder;
+
+        fileEl.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', JSON.stringify({
+            filename: file,
+            fromFolder: folder
+          }));
+        });
 
         const nameSpan = document.createElement('span');
         nameSpan.textContent = `📄 ${file}`;

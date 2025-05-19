@@ -62,7 +62,6 @@ body.dark-mode {
   display: flex;
   flex-direction: column;
   border-right: 1px solid #333;
-  overflow-y: auto;
   font-size: 14px;
   transform: translateX(0);
   transition: transform 0.3s ease;
@@ -72,6 +71,33 @@ body.dark-mode {
 
 .sidebar.collapsed {
   transform: translateX(-100%);
+}
+
+/* ===== Scrollbar dentro de .folder-structure ===== */
+.folder-structure {
+  margin-top: 2rem;
+  flex-grow: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #1f1f1f;
+}
+
+.folder-structure::-webkit-scrollbar {
+  width: 6px;
+}
+
+.folder-structure::-webkit-scrollbar-track {
+  background: #1f1f1f;
+}
+
+.folder-structure::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 8px;
+  border: 2px solid #1f1f1f;
+}
+
+.folder-structure::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
 }
 
 /* ======= BOTÓN DE OCULTAR SIDEBAR ======= */
@@ -138,12 +164,6 @@ body.dark-mode {
 }
 
 /* ======= ESTRUCTURA DE CARPETAS Y ARCHIVOS ======= */
-.folder-structure {
-  margin-top: 2rem;
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
 .tree-item {
   margin: 4px 0;
   padding: 4px;
@@ -178,7 +198,7 @@ body.dark-mode {
 }
 
 .main-content::-webkit-scrollbar {
-  width: 12px;
+  width: 6px;
 }
 
 .main-content::-webkit-scrollbar-track {
@@ -188,7 +208,7 @@ body.dark-mode {
 .main-content::-webkit-scrollbar-thumb {
   background-color: #555;
   border-radius: 8px;
-  border: 3px solid #1e1e1e;
+  border: 2px solid #1e1e1e;
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {

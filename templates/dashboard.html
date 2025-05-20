@@ -6,15 +6,22 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login';
+  }
+</script>
 <body class="dark-mode">
   <div class="dashboard-container">
     
     <!-- Botón Sidebar -->
     <button id="toggle-sidebar" title="Ocultar barra lateral">❮</button>
 
-    <!-- Avatar -->
+    <!-- Avatar y Logout -->
     <div class="user-avatar">
       <img src="{{ url_for('static', filename='img/profile.jpg') }}" alt="Avatar de usuario" />
+      <button id="logout-btn" title="Cerrar sesión">⎋</button>
     </div>
 
     <!-- Sidebar -->
@@ -55,5 +62,38 @@
   </div>  
 
   <script src="/static/script.js"></script>
+
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    });
+  </script>
+
+  <style>
+    #logout-btn {
+      background: none;
+      border: none;
+      color: #00bcd4;
+      font-size: 1.4rem;
+      margin-left: 10px;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+
+    #logout-btn:hover {
+      color: #f44336;
+    }
+
+    .user-avatar {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
 </body>
 </html>

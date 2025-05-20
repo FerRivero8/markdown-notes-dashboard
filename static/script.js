@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+
   const folderContainer = document.querySelector('.folder-structure');
   const viewer = document.getElementById('markdown-viewer');
 
@@ -16,7 +22,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const res = await fetch('/api/save', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
       body: JSON.stringify({ folder, filename: '.empty', content: '' })
     });
 
@@ -30,7 +39,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadStructure() {
     folderContainer.innerHTML = '';
-    const folderRes = await fetch('/api/folders');
+    const folderRes = await fetch('/api/folders', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
     const folders = await folderRes.json();
 
     for (const folder of folders) {
@@ -63,7 +74,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const content = await askUser('Contenido inicial (opcional):') || '';
         const res = await fetch('/api/save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
           body: JSON.stringify({ folder, filename, content })
         });
         if (res.ok) {
@@ -83,7 +97,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const confirmed = await confirmAction(`¿Eliminar la carpeta "${folder}" y su contenido?`);
         if (!confirmed) return;
 
-        fetch(`/api/delete_folder?folder=${folder}`, { method: 'DELETE' })
+        fetch(`/api/delete_folder?folder=${folder}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
           .then(res => {
             if (res.ok) {
               loadStructure();
@@ -94,7 +111,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
       };
 
-      // Drag target handlers for folders
       folderHeader.addEventListener('dragover', (e) => {
         e.preventDefault();
         folderHeader.style.backgroundColor = '#2e2e2e';
@@ -107,33 +123,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       folderHeader.addEventListener('drop', async (e) => {
         e.preventDefault();
         folderHeader.style.backgroundColor = '';
-      
+
         const data = JSON.parse(e.dataTransfer.getData('text/plain'));
         const { filename, fromFolder } = data;
         const toFolder = folder;
-      
+
         if (fromFolder === toFolder) {
           return showToast("El archivo ya está en esta carpeta.", 'info');
         }
-      
-        // 🔁 Llamada al backend
+
         const res = await fetch('/api/move_file', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
           body: JSON.stringify({
             file: filename,
             source: fromFolder,
             target: toFolder
           })
         });
-      
+
         if (res.ok) {
           showToast(`"${filename}" movido a "${toFolder}".`, 'success');
-          await loadStructure(); // ✅ Refresca la estructura después del movimiento
+          await loadStructure();
         } else {
           showToast('Error al mover el archivo.', 'error');
         }
-      });      
+      });
 
       actions.appendChild(addBtn);
       actions.appendChild(menuBtn);
@@ -151,7 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         folderName.innerHTML = `${isVisible ? '📁' : '📂'} <strong>${folder}</strong>`;
       });
 
-      const filesRes = await fetch(`/api/files?folder=${folder}`);
+      const filesRes = await fetch(`/api/files?folder=${folder}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
       const files = await filesRes.json();
 
       files.forEach(file => {
@@ -177,7 +197,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         nameSpan.style.cursor = 'pointer';
 
         nameSpan.addEventListener('click', async () => {
-          const fileRes = await fetch(`/data/${folder}/${file}`);
+          const fileRes = await fetch(`/data/${folder}/${file}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
           const content = await fileRes.text();
           viewer.innerHTML = marked.parse(content);
           showToast(`Visualizando "${file}".`);
@@ -192,7 +214,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           const confirmed = await confirmAction(`¿Eliminar el archivo "${file}"?`);
           if (!confirmed) return;
 
-          fetch(`/api/delete_file?folder=${folder}&file=${file}`, { method: 'DELETE' })
+          fetch(`/api/delete_file?folder=${folder}&file=${file}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+          })
             .then(res => {
               if (res.ok) {
                 loadStructure();

@@ -12,7 +12,7 @@ def list_files(base_path, folder):
 def save_markdown(base_path, folder, filename, content):
     folder_path = os.path.join(base_path, folder)
     if not os.path.exists(folder_path):
-        raise FileNotFoundError("Folder does not exist")
+        os.makedirs(folder_path)  # ✅ CREA LA CARPETA SI NO EXISTE
 
     file_path = os.path.join(folder_path, filename)
     with open(file_path, 'w', encoding='utf-8') as f:

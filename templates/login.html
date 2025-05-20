@@ -1,89 +1,81 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Iniciar Sesión - MySpace</title>
+  <meta charset="UTF-8" />
+  <title>My Space - Login</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    body.dark-mode {
-      background: linear-gradient(135deg, #1a1a1a, #101010);
+    body {
+      font-family: system-ui, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      color: #e0e0e0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: white;
     }
-
-    .login-box {
-      background-color: #181818;
-      padding: 2rem;
+    .login-container {
+      background: #1f1f1f;
+      padding: 2rem 3rem;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 188, 212, 0.3);
+      box-shadow: 0 0 12px #000;
+      max-width: 400px;
       width: 100%;
-      max-width: 360px;
+    }
+    h1 {
       text-align: center;
-    }
-
-    .login-box h2 {
       margin-bottom: 1.5rem;
-      color: #00bcd4;
     }
-
-    .login-box input {
+    input {
       width: 100%;
-      padding: 0.6rem;
+      padding: 0.75rem;
       margin-bottom: 1rem;
-      border: 1px solid #333;
-      border-radius: 6px;
-      background-color: #2a2a2a;
-      color: #fff;
-    }
-
-    .login-box button {
-      width: 100%;
-      padding: 0.6rem;
-      background-color: #00bcd4;
-      color: #000;
       border: none;
       border-radius: 6px;
+      background: #2c2c2c;
+      color: white;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #00bcd4;
+      border: none;
+      border-radius: 6px;
+      color: white;
       font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.2s ease;
     }
-
-    .login-box button:hover {
-      background-color: #00acc1;
+    button:hover {
+      background: #0097a7;
     }
-
-    .error-msg {
+    .error {
       color: #f44336;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
-<body class="dark-mode">
-  <div class="login-box">
-    <h2>Inicia Sesión</h2>
-    <div id="error" class="error-msg" style="display: none;"></div>
-    <input type="text" id="username" placeholder="Usuario">
-    <input type="password" id="password" placeholder="Contraseña">
-    <button onclick="login()">Entrar</button>
+<body>
+  <div class="login-container">
+    <h1>Iniciar Sesión</h1>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Nombre de usuario" required />
+      <input type="password" id="password" placeholder="Contraseña" required />
+      <button type="submit">Entrar</button>
+      <div id="error-msg" class="error"></div>
+    </form>
   </div>
 
   <script>
-    async function login() {
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
-      const errorDiv = document.getElementById('error');
-
-      if (!username || !password) {
-        errorDiv.textContent = 'Completa todos los campos.';
-        errorDiv.style.display = 'block';
-        return;
-      }
 
       try {
         const res = await fetch('/api/login', {
@@ -94,18 +86,17 @@
 
         const data = await res.json();
 
-        if (res.ok && data.access_token) {
+        if (res.ok) {
           localStorage.setItem('token', data.access_token);
-          window.location.href = '/';
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = '/'; // Redirige al index
         } else {
-          errorDiv.textContent = data.msg || 'Credenciales incorrectas.';
-          errorDiv.style.display = 'block';
+          errorMsg.textContent = data.msg || 'Credenciales incorrectas';
         }
       } catch (err) {
-        errorDiv.textContent = 'Error de conexión con el servidor.';
-        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'Error de red o servidor.';
       }
-    }
+    });
   </script>
 </body>
 </html>

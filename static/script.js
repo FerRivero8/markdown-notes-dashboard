@@ -1,8 +1,29 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
-  if (!token) {
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  if (!token || !user) {
     window.location.href = '/login';
     return;
+  }
+
+  // 👤 Mostrar nombre, correo y avatar del usuario si existen elementos HTML
+  const avatarEl = document.getElementById('user-avatar');
+  const nameEl = document.getElementById('user-name');
+  const emailEl = document.getElementById('user-email');
+
+  if (avatarEl) avatarEl.src = '/static/' + user.avatar;
+  if (nameEl) nameEl.textContent = user.name;
+  if (emailEl) emailEl.textContent = user.email;
+
+  // 🔘 Logout
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    });
   }
 
   const folderContainer = document.querySelector('.folder-structure');
@@ -241,16 +262,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadStructure();
 });
 
+// 🔔 Toasts
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.classList.add('toast');
 
-  if (type === 'error') {
-    toast.style.borderLeftColor = '#f44336';
-  } else if (type === 'success') {
-    toast.style.borderLeftColor = '#4caf50';
-  }
+  if (type === 'error') toast.style.borderLeftColor = '#f44336';
+  if (type === 'success') toast.style.borderLeftColor = '#4caf50';
 
   toast.textContent = message;
   container.appendChild(toast);
@@ -260,6 +279,7 @@ function showToast(message, type = 'info') {
   }, 4500);
 }
 
+// 🧾 Modal input
 function askUser(message) {
   return new Promise((resolve) => {
     const modal = document.getElementById('custom-modal');
@@ -294,6 +314,7 @@ function askUser(message) {
   });
 }
 
+// ❓ Confirm modal
 function confirmAction(message) {
   return new Promise((resolve) => {
     const modal = document.getElementById('custom-modal');

@@ -68,14 +68,45 @@
       background-color: #00acc1;
       transform: scale(1.05);
     }
+
+    .logout {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #aaa;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .logout:hover {
+      color: #f44336;
+    }
   </style>
 </head>
 <body class="dark-mode">
   <div class="welcome-wrapper">
-    <img class="profile-pic" src="{{ url_for('static', filename='/img/profile.jpg') }}" alt="Foto de perfil">
-    <p>ferrivero@correo.es</p>
-    <h2>¡Hola, Fernando!</h2>
+    <img id="user-avatar" class="profile-pic" src="" alt="Foto de perfil">
+    <p id="user-email">correo@usuario.com</p>
+    <h2 id="user-name">¡Hola, Usuario!</h2>
     <a class="access-button" href="{{ url_for('dashboard') }}">Entrar a MySpace</a>
+    <div class="logout" id="logout-btn">Cerrar sesión</div>
   </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !user) {
+      window.location.href = '/login';
+    } else {
+      document.getElementById('user-avatar').src = '/static/' + user.avatar;
+      document.getElementById('user-name').textContent = `¡Hola, ${user.name.split(' ')[0]}!`;
+      document.getElementById('user-email').textContent = user.email;
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    });
+  </script>
 </body>
 </html>

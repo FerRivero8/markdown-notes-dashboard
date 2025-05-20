@@ -1,5 +1,6 @@
 # Evita subir la imagen personal
 /static/img/profile.jpg
+/static/img/profile_1.jpg
 
 # No subir archivos de usuario ni notas personales
 /data/*

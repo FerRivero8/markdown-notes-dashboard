@@ -8,7 +8,8 @@
 </head>
 <script>
   const token = localStorage.getItem('token');
-  if (!token) {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!token || !user) {
     window.location.href = '/login';
   }
 </script>
@@ -20,7 +21,7 @@
 
     <!-- Avatar y Logout -->
     <div class="user-avatar">
-      <img src="{{ url_for('static', filename='img/profile.jpg') }}" alt="Avatar de usuario" />
+      <img id="user-avatar" src="" alt="Avatar de usuario" />
       <button id="logout-btn" title="Cerrar sesión">⎋</button>
     </div>
 
@@ -64,8 +65,15 @@
   <script src="/static/script.js"></script>
 
   <script>
+    const avatar = document.getElementById('user-avatar');
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (avatar && userData?.avatar) {
+      avatar.src = '/static/' + userData.avatar;
+    }
+
     document.getElementById('logout-btn').addEventListener('click', () => {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     });
   </script>
@@ -93,6 +101,15 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .user-avatar img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #00bcd4;
+      box-shadow: 0 0 6px rgba(0, 188, 212, 0.5);
     }
   </style>
 </body>

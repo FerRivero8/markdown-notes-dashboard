@@ -5,8 +5,24 @@ from flask_jwt_extended import (
 import os
 import shutil
 from utils.file_manager import list_folders, list_files, save_markdown
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash
+
+db = SQLAlchemy()
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+db.init_app(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(120), unique=True)
+    avatar = db.Column(db.String(200))
+
 
 # 📁 Ruta base de almacenamiento de archivos markdown
 DATA_DIR = os.path.join(os.getcwd(), 'data')
@@ -41,18 +57,29 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    # 🔐 AUTENTICACIÓN BÁSICA (de prueba)
-    if username == 'fer' and password == 'fer':
-        access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token)
-    else:
-        return jsonify({'msg': 'Credenciales inválidas'}), 401
+    user = User.query.filter_by(username=username).first()
+
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({'msg': 'Invalid credentials'}), 401
+
+    access_token = create_access_token(identity=str(user.id))
+
+
+    return jsonify({
+        'access_token': access_token,
+        'user': {
+            'name': user.name,
+            'email': user.email,
+            'avatar': user.avatar
+        }
+    })
 
 # ------------------- API protegida con JWT -------------------
 
 @app.route('/api/folders', methods=['GET'])
 @jwt_required()
 def get_folders():
+    print("🧠 Usuario con ID:", get_jwt_identity())
     folders = list_folders(DATA_DIR)
     return jsonify(folders)
 
@@ -126,6 +153,21 @@ def move_file():
         return jsonify({'status': 'moved'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'msg': 'User not found'}), 404
+
+    return jsonify({
+        'name': user.name,
+        'email': user.email,
+        'avatar': user.avatar
+    })
+
 
 # ------------------- Servir archivos -------------------
 

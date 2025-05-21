@@ -8,9 +8,7 @@ from utils.file_manager import list_folders, list_files, save_markdown
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
 from flask import request, redirect
-from flask_jwt_extended import decode_token
-from jwt import ExpiredSignatureError, InvalidTokenError
-import datetime
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 db = SQLAlchemy()
 
@@ -37,19 +35,7 @@ class User(db.Model):
 
 @app.route('/')
 def index():
-    token = request.cookies.get('access_token_cookie') or request.headers.get('Authorization', '').replace('Bearer ', '')
-
-    if not token:
-        return redirect('/login')
-
-    try:
-        decoded = decode_token(token)
-        exp = datetime.datetime.fromtimestamp(decoded['exp'])
-        if exp < datetime.datetime.utcnow():
-            return redirect('/login')
-        return render_template('index.html')
-    except Exception:
-        return redirect('/login')
+    return render_template('index.html')
 
 @app.route('/login')
 def login_page():

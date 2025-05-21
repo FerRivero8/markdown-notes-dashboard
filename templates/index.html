@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <title>Bienvenido a MySpace</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  
+  <!-- ⛔️ Previene renderizado si no hay token -->
+  <script>
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (!token || !user) {
+      window.location.href = '/login';
+    }
+  </script>
+
   <style>
     body.dark-mode {
       margin: 0;
@@ -81,6 +91,7 @@
     }
   </style>
 </head>
+
 <body class="dark-mode">
   <div class="welcome-wrapper">
     <img id="user-avatar" class="profile-pic" src="" alt="Foto de perfil">
@@ -91,22 +102,19 @@
   </div>
 
   <script>
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-
-    if (!token || !user) {
-      window.location.href = '/login';
-    } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      let user = JSON.parse(localStorage.getItem('user'));
       document.getElementById('user-avatar').src = '/static/' + user.avatar;
       document.getElementById('user-name').textContent = `¡Hola, ${user.name.split(' ')[0]}!`;
       document.getElementById('user-email').textContent = user.email;
-    }
-
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+  
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      });
     });
   </script>
+  
 </body>
 </html>

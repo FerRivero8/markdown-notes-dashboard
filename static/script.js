@@ -1,3 +1,5 @@
+// script.js actualizado con menú contextual para carpetas y archivos
+
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user'));
@@ -7,7 +9,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // 👤 Mostrar nombre, correo y avatar del usuario si existen elementos HTML
   const avatarEl = document.getElementById('user-avatar');
   const nameEl = document.getElementById('user-name');
   const emailEl = document.getElementById('user-email');
@@ -16,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (nameEl) nameEl.textContent = user.name;
   if (emailEl) emailEl.textContent = user.email;
 
-  // 🔘 Logout
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -58,6 +58,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  const contextMenu = document.getElementById('context-menu');
+  const renameOption = document.getElementById('rename-option');
+  const deleteOption = document.getElementById('delete-option');
+
+  let selectedFile = null;
+  let selectedFolder = null;
+  let isFolderContext = false;
+
+  document.addEventListener('click', () => {
+    contextMenu.classList.add('hidden');
+  });
+
   async function loadStructure() {
     folderContainer.innerHTML = '';
     const folderRes = await fetch('/api/folders', {
@@ -67,15 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     for (const folder of folders) {
       const folderEl = document.createElement('div');
-
       const folderHeader = document.createElement('div');
       folderHeader.classList.add('tree-item', 'item-label');
       folderHeader.style.display = 'flex';
       folderHeader.style.alignItems = 'center';
       folderHeader.style.justifyContent = 'space-between';
-      folderHeader.style.padding = '4px';
-      folderHeader.style.borderRadius = '4px';
-      folderHeader.style.cursor = 'pointer';
 
       const folderName = document.createElement('span');
       folderName.innerHTML = `📁 <strong>${folder}</strong>`;
@@ -87,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const addBtn = document.createElement('span');
       addBtn.textContent = '+';
       addBtn.className = 'add-md-btn';
-      addBtn.title = 'Añadir archivo .md a esta carpeta';
+      addBtn.title = 'Añadir archivo .md';
       addBtn.onclick = async (e) => {
         e.stopPropagation();
         const filename = await askUser('Nombre del nuevo archivo .md:');
@@ -103,9 +111,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         if (res.ok) {
           loadStructure();
-          showToast(`Archivo "${filename}" creado en "${folder}".`, 'success');
+          showToast(`Archivo "${filename}" creado.`, 'success');
         } else {
-          showToast('Error al crear el archivo.', 'error');
+          showToast('Error al crear archivo.', 'error');
         }
       };
 
@@ -113,64 +121,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       menuBtn.textContent = '⋯';
       menuBtn.className = 'add-md-btn';
       menuBtn.title = 'Opciones de carpeta';
-      menuBtn.onclick = async (e) => {
+      menuBtn.onclick = (e) => {
         e.stopPropagation();
-        const confirmed = await confirmAction(`¿Eliminar la carpeta "${folder}" y su contenido?`);
-        if (!confirmed) return;
-
-        fetch(`/api/delete_folder?folder=${folder}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + token }
-        })
-          .then(res => {
-            if (res.ok) {
-              loadStructure();
-              showToast(`Carpeta "${folder}" eliminada.`, 'success');
-            } else {
-              showToast('Error al eliminar la carpeta.', 'error');
-            }
-          });
+        selectedFolder = folder;
+        selectedFile = null;
+        isFolderContext = true;
+        contextMenu.style.top = `${e.clientY}px`;
+        contextMenu.style.left = `${e.clientX}px`;
+        contextMenu.classList.remove('hidden');
       };
 
-      folderHeader.addEventListener('dragover', (e) => {
+      folderHeader.addEventListener('dragover', e => e.preventDefault());
+      folderHeader.addEventListener('drop', async e => {
         e.preventDefault();
-        folderHeader.style.backgroundColor = '#2e2e2e';
-      });
-
-      folderHeader.addEventListener('dragleave', () => {
-        folderHeader.style.backgroundColor = '';
-      });
-
-      folderHeader.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        folderHeader.style.backgroundColor = '';
-
         const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-        const { filename, fromFolder } = data;
-        const toFolder = folder;
-
-        if (fromFolder === toFolder) {
-          return showToast("El archivo ya está en esta carpeta.", 'info');
-        }
-
         const res = await fetch('/api/move_file', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
           },
-          body: JSON.stringify({
-            file: filename,
-            source: fromFolder,
-            target: toFolder
-          })
+          body: JSON.stringify({ file: data.filename, source: data.fromFolder, target: folder })
         });
-
         if (res.ok) {
-          showToast(`"${filename}" movido a "${toFolder}".`, 'success');
-          await loadStructure();
+          showToast(`Archivo movido a "${folder}"`, 'success');
+          loadStructure();
         } else {
-          showToast('Error al mover el archivo.', 'error');
+          showToast('Error al mover archivo.', 'error');
         }
       });
 
@@ -182,12 +159,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const filesWrapper = document.createElement('div');
       filesWrapper.style.display = 'none';
-      filesWrapper.style.marginLeft = '10px';
-
       folderHeader.addEventListener('click', () => {
-        const isVisible = filesWrapper.style.display === 'block';
-        filesWrapper.style.display = isVisible ? 'none' : 'block';
-        folderName.innerHTML = `${isVisible ? '📁' : '📂'} <strong>${folder}</strong>`;
+        const visible = filesWrapper.style.display === 'block';
+        filesWrapper.style.display = visible ? 'none' : 'block';
+        folderName.innerHTML = `${visible ? '📁' : '📂'} <strong>${folder}</strong>`;
       });
 
       const filesRes = await fetch(`/api/files?folder=${folder}`, {
@@ -198,55 +173,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       files.forEach(file => {
         const fileEl = document.createElement('div');
         fileEl.classList.add('tree-item', 'item-label');
-        fileEl.style.display = 'flex';
         fileEl.style.justifyContent = 'space-between';
-        fileEl.style.alignItems = 'center';
         fileEl.style.paddingLeft = '20px';
         fileEl.setAttribute('draggable', 'true');
-        fileEl.dataset.filename = file;
-        fileEl.dataset.folder = folder;
 
         fileEl.addEventListener('dragstart', (e) => {
-          e.dataTransfer.setData('text/plain', JSON.stringify({
-            filename: file,
-            fromFolder: folder
-          }));
+          e.dataTransfer.setData('text/plain', JSON.stringify({ filename: file, fromFolder: folder }));
         });
 
         const nameSpan = document.createElement('span');
         nameSpan.textContent = `📄 ${file}`;
         nameSpan.style.cursor = 'pointer';
-
-        nameSpan.addEventListener('click', async () => {
+        nameSpan.onclick = async () => {
           const fileRes = await fetch(`/data/${folder}/${file}`, {
             headers: { 'Authorization': 'Bearer ' + token }
           });
           const content = await fileRes.text();
           viewer.innerHTML = marked.parse(content);
           showToast(`Visualizando "${file}".`);
-        });
+        };
 
         const fileMenu = document.createElement('span');
         fileMenu.textContent = '⋯';
         fileMenu.className = 'add-md-btn';
-        fileMenu.title = 'Eliminar archivo';
-        fileMenu.onclick = async (e) => {
+        fileMenu.onclick = (e) => {
           e.stopPropagation();
-          const confirmed = await confirmAction(`¿Eliminar el archivo "${file}"?`);
-          if (!confirmed) return;
-
-          fetch(`/api/delete_file?folder=${folder}&file=${file}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token }
-          })
-            .then(res => {
-              if (res.ok) {
-                loadStructure();
-                showToast(`Archivo "${file}" eliminado.`, 'success');
-              } else {
-                showToast('Error al eliminar el archivo.', 'error');
-              }
-            });
+          selectedFile = file;
+          selectedFolder = folder;
+          isFolderContext = false;
+          contextMenu.style.top = `${e.clientY}px`;
+          contextMenu.style.left = `${e.clientX}px`;
+          contextMenu.classList.remove('hidden');
         };
 
         fileEl.appendChild(nameSpan);
@@ -259,27 +216,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  renameOption.addEventListener('click', async () => {
+    contextMenu.classList.add('hidden');
+    const newName = await askUser(`Nuevo nombre para ${isFolderContext ? 'la carpeta' : 'el archivo'}:`);
+    if (!newName || (!isFolderContext && !newName.endsWith('.md'))) {
+      showToast('Nombre inválido', 'error');
+      return;
+    }
+    const endpoint = isFolderContext ? '/api/rename_folder' : '/api/rename_file';
+    const body = isFolderContext
+      ? { old_name: selectedFolder, new_name: newName }
+      : { folder: selectedFolder, old_name: selectedFile, new_name: newName };
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok && data.status === 'renamed') {
+      showToast(`${isFolderContext ? 'Carpeta' : 'Archivo'} renombrado a "${newName}"`, 'success');
+      await loadStructure();
+    } else {
+      showToast(data.message || 'Error al renombrar', 'error');
+    }
+  });
+
+  deleteOption.addEventListener('click', async () => {
+    contextMenu.classList.add('hidden');
+    const confirmed = await confirmAction(`¿Eliminar ${isFolderContext ? 'la carpeta' : 'el archivo'} "${isFolderContext ? selectedFolder : selectedFile}"?`);
+    if (!confirmed) return;
+    const res = await fetch(
+      isFolderContext
+        ? `/api/delete_folder?folder=${selectedFolder}`
+        : `/api/delete_file?folder=${selectedFolder}&file=${selectedFile}`,
+      {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      }
+    );
+    if (res.ok) {
+      showToast(`${isFolderContext ? 'Carpeta' : 'Archivo'} eliminado`, 'success');
+      loadStructure();
+    } else {
+      showToast('Error al eliminar', 'error');
+    }
+  });
+
   loadStructure();
 });
 
-// 🔔 Toasts
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.classList.add('toast');
-
   if (type === 'error') toast.style.borderLeftColor = '#f44336';
   if (type === 'success') toast.style.borderLeftColor = '#4caf50';
-
   toast.textContent = message;
   container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 4500);
+  setTimeout(() => toast.remove(), 4500);
 }
 
-// 🧾 Modal input
 function askUser(message) {
   return new Promise((resolve) => {
     const modal = document.getElementById('custom-modal');
@@ -314,7 +314,6 @@ function askUser(message) {
   });
 }
 
-// ❓ Confirm modal
 function confirmAction(message) {
   return new Promise((resolve) => {
     const modal = document.getElementById('custom-modal');

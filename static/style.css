@@ -395,3 +395,44 @@ body.dark-mode {
   background-color: #444;
   color: white;
 }
+
+/* ====== MENÚ CONTEXTUAL DE ARCHIVO ====== */
+.context-menu {
+  position: fixed;
+  z-index: 9999;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  min-width: 140px;
+  font-size: 14px;
+}
+
+.context-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.context-menu li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #444;
+}
+
+.context-menu li:last-child {
+  border-bottom: none;
+}
+
+.context-menu li:hover {
+  background-color: #00bcd4;
+  color: #000;
+}
+
+.context-menu.hidden {
+  display: none;
+}
+
+.context-menu .danger {
+  color: #f44336;
+}

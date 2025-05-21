@@ -7,14 +7,24 @@ import shutil
 from utils.file_manager import list_folders, list_files, save_markdown
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
+from flask import request, redirect
+from flask_jwt_extended import decode_token
+from jwt import ExpiredSignatureError, InvalidTokenError
+import datetime
 
 db = SQLAlchemy()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['JWT_SECRET_KEY'] = 'clave-super-secreta'  # cámbiala por algo más seguro
 
 db.init_app(app)
+jwt = JWTManager(app)
 
+# 📁 Ruta base de almacenamiento
+DATA_DIR = os.path.join(os.getcwd(), 'data')
+
+# 📦 Modelo de usuario
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -23,19 +33,23 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True)
     avatar = db.Column(db.String(200))
 
-
-# 📁 Ruta base de almacenamiento de archivos markdown
-DATA_DIR = os.path.join(os.getcwd(), 'data')
-
-# 🔐 Clave secreta para firmar los JWT
-app.config['JWT_SECRET_KEY'] = 'clave-super-secreta'  # cámbiala por algo más seguro
-jwt = JWTManager(app)
-
 # ------------------- Rutas públicas -------------------
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    token = request.cookies.get('access_token_cookie') or request.headers.get('Authorization', '').replace('Bearer ', '')
+
+    if not token:
+        return redirect('/login')
+
+    try:
+        decoded = decode_token(token)
+        exp = datetime.datetime.fromtimestamp(decoded['exp'])
+        if exp < datetime.datetime.utcnow():
+            return redirect('/login')
+        return render_template('index.html')
+    except Exception:
+        return redirect('/login')
 
 @app.route('/login')
 def login_page():
@@ -64,7 +78,6 @@ def login():
 
     access_token = create_access_token(identity=str(user.id))
 
-
     return jsonify({
         'access_token': access_token,
         'user': {
@@ -79,29 +92,40 @@ def login():
 @app.route('/api/folders', methods=['GET'])
 @jwt_required()
 def get_folders():
-    print("🧠 Usuario con ID:", get_jwt_identity())
-    folders = list_folders(DATA_DIR)
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+    os.makedirs(user_dir, exist_ok=True)
+
+    folders = list_folders(user_dir)
     return jsonify(folders)
 
 @app.route('/api/files', methods=['GET'])
 @jwt_required()
 def get_files():
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+
     folder = request.args.get('folder')
     if not folder:
         return jsonify({'status': 'error', 'message': 'Parámetro "folder" requerido'}), 400
 
-    files = list_files(DATA_DIR, folder)
+    files = list_files(user_dir, folder)
     return jsonify(files)
 
 @app.route('/api/save', methods=['POST'])
 @jwt_required()
 def save_file():
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+    os.makedirs(user_dir, exist_ok=True)
+
     data = request.get_json()
     folder = data['folder']
     filename = data['filename']
     content = data['content']
+
     try:
-        save_markdown(DATA_DIR, folder, filename, content)
+        save_markdown(user_dir, folder, filename, content)
         return jsonify({'status': 'ok'})
     except FileNotFoundError:
         return jsonify({'status': 'error', 'message': 'La carpeta no existe'}), 400
@@ -109,8 +133,11 @@ def save_file():
 @app.route('/api/delete_folder', methods=['DELETE'])
 @jwt_required()
 def delete_folder():
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+
     folder = request.args.get('folder')
-    folder_path = os.path.join(DATA_DIR, folder)
+    folder_path = os.path.join(user_dir, folder)
     if os.path.exists(folder_path):
         shutil.rmtree(folder_path)
         return jsonify({'status': 'deleted'})
@@ -119,9 +146,12 @@ def delete_folder():
 @app.route('/api/delete_file', methods=['DELETE'])
 @jwt_required()
 def delete_file():
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+
     folder = request.args.get('folder')
     file = request.args.get('file')
-    file_path = os.path.join(DATA_DIR, folder, file)
+    file_path = os.path.join(user_dir, folder, file)
     if os.path.exists(file_path):
         os.remove(file_path)
         return jsonify({'status': 'deleted'})
@@ -130,6 +160,9 @@ def delete_file():
 @app.route('/api/move_file', methods=['POST'])
 @jwt_required()
 def move_file():
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+
     data = request.get_json()
     file = data.get('file')
     source = data.get('source')
@@ -138,8 +171,8 @@ def move_file():
     if not all([file, source, target]):
         return jsonify({'status': 'error', 'message': 'Datos incompletos'}), 400
 
-    source_path = os.path.join(DATA_DIR, source, file)
-    target_folder_path = os.path.join(DATA_DIR, target)
+    source_path = os.path.join(user_dir, source, file)
+    target_folder_path = os.path.join(user_dir, target)
     target_path = os.path.join(target_folder_path, file)
 
     if not os.path.exists(source_path):
@@ -153,7 +186,7 @@ def move_file():
         return jsonify({'status': 'moved'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-    
+
 @app.route('/api/me', methods=['GET'])
 @jwt_required()
 def me():
@@ -168,13 +201,75 @@ def me():
         'avatar': user.avatar
     })
 
+@app.route('/api/rename_file', methods=['POST'])
+@jwt_required()
+def rename_file():
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+
+    data = request.get_json()
+    folder = data.get('folder')
+    old_name = data.get('old_name')
+    new_name = data.get('new_name')
+
+    if not folder or not old_name or not new_name:
+        return jsonify({'status': 'error', 'message': 'Datos incompletos'}), 400
+
+    folder_path = os.path.join(user_dir, folder)
+    old_path = os.path.join(folder_path, old_name)
+    new_path = os.path.join(folder_path, new_name)
+
+    if not os.path.exists(old_path):
+        return jsonify({'status': 'error', 'message': 'Archivo original no encontrado'}), 404
+
+    if os.path.exists(new_path):
+        return jsonify({'status': 'error', 'message': 'Ya existe un archivo con ese nombre'}), 400
+
+    try:
+        os.rename(old_path, new_path)
+        return jsonify({'status': 'renamed'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/rename_folder', methods=['POST'])
+@jwt_required()
+def rename_folder():
+    data = request.get_json()
+    old_name = data.get('old_name')
+    new_name = data.get('new_name')
+
+    if not old_name or not new_name:
+        return jsonify({'status': 'error', 'message': 'Nombres inválidos'}), 400
+
+    user_id = str(get_jwt_identity())
+    user_data_path = os.path.join(DATA_DIR, user_id)
+    old_path = os.path.join(user_data_path, old_name)
+    new_path = os.path.join(user_data_path, new_name)
+
+    if not os.path.exists(old_path):
+        return jsonify({'status': 'error', 'message': 'La carpeta original no existe'}), 404
+    if os.path.exists(new_path):
+        return jsonify({'status': 'error', 'message': 'Ya existe una carpeta con ese nombre'}), 400
+
+    try:
+        os.rename(old_path, new_path)
+        return jsonify({'status': 'renamed'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # ------------------- Servir archivos -------------------
 
 @app.route('/data/<path:filename>')
 @jwt_required()
 def serve_markdown_file(filename):
-    return send_from_directory('data', filename)
+    user_id = str(get_jwt_identity())
+    user_dir = os.path.join(DATA_DIR, user_id)
+    file_path = os.path.join(user_dir, filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+
+    return send_from_directory(user_dir, filename)
 
 # ------------------- Inicio -------------------
 
